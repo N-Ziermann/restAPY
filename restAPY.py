@@ -5,38 +5,58 @@ import json
 
 #turn into single API-Class later on
 
+class API:
+    def __init__(self, port=80, url="0.0.0.0"):
+        # connection info:
+        self.port = port
+        self.url = url
+        self.maxConnections = 16
+        self.encoding = "utf-8"
+        # JSON settings
+        self.URLpaths = {"/" : {"info": ["Default data", "No data given"]}}
+        self.sortJSON = False
+        self.JSONindent = 4
 
-def run_api(port):  #while loop that starts a new thread for each incomming request
-    s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    s.bind(("0.0.0.0", port))
-    s.listen(16)
-    print("listening on", "0.0.0.0", port )
-    while True:
-        thread = threading.Thread(target=handle_request,name="thread",args=(s.accept()))
-        thread.daemon = True
-        thread.start()
+
+    def setPath(self, path, data):
+        self.URLpaths[path] = data
 
 
-def handle_request(clientsocket, adress):
-    requestString = clientsocket.recv(1024).decode("utf-8")
-    request = htmlRequestToDict(requestString)
-    jsonResponse = json.dumps({"a":"abc","b":5,"n":3}, indent=4, sort_keys=True)
-    print(request)
+    def run(self):
+        self.socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        self.socket.bind((self.url, self.port))
+        self.socket.listen(self.maxConnections)
+        print("listening on", self.url, self.port )
+        while True:
+            thread = threading.Thread(target=self.handle_request,name="thread",args=(self.socket.accept()))
+            thread.daemon = True
+            thread.start()
 
-    if(request["Type"] == "GET"):  # http request made through browser
-        clientsocket.send(b'HTTP/1.0 200 OK\n')
-        clientsocket.send(b'Content-Type: application/json\n')
-        clientsocket.send(b'\n')
-        clientsocket.sendall(bytes(jsonResponse,"utf-8"))
-        clientsocket.close()
-    else:
-        clientsocket.sendall(bytes(jsonResponse,"utf-8"))
-        clientsocket.close()
+
+    def handle_request(self, clientsocket, adress):
+        requestString = clientsocket.recv(1024).decode("utf-8")
+        request = htmlRequestToDict(requestString)
+        if request["Path"] in self.URLpaths:
+            jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
+        else:
+            jsonResponse = "Invalid Path"
+
+        if(request["Type"] == "GET"):  # http request made through browser
+            clientsocket.send(b'HTTP/1.0 200 OK\n')
+            clientsocket.send(b'Content-Type: application/json\n')
+            clientsocket.send(b'\n')
+            clientsocket.sendall(bytes(jsonResponse,"utf-8"))
+            clientsocket.close()
+        else:
+            clientsocket.sendall(bytes(jsonResponse,"utf-8"))
+            clientsocket.close()
+
 
 
 def htmlRequestToDict(request_string):
     rowSeperated = request_string.split("\n")
-    requestDict = {"Type":rowSeperated[0].split(" ")[0]}
+    row1Data = rowSeperated[0].split(" ")
+    requestDict = {"Type":row1Data[0], "Path":row1Data[1]}
     for i in range(1, len(rowSeperated)):
         if(len(rowSeperated[i])>1): #prevent bugs caused by empty rows at end message
             key = ""
