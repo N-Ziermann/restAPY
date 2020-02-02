@@ -36,15 +36,15 @@ class API:
         if request["Path"] in self.URLpaths:
             jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
         else:
-            jsonResponse = "Invalid Path"
+            jsonResponse = json.dumps({"Error":"Invalid Path"})
 
-        if(request["Type"] == "GET"):  # http request made through browser
+        if(request["Type"] == "GET"):   # http request
             clientsocket.send(b'HTTP/1.0 200 OK\n')
             clientsocket.send(b'Content-Type: application/json\n')
             clientsocket.send(b'\n')
             clientsocket.sendall(bytes(jsonResponse,"utf-8"))
             clientsocket.close()
-        else:
+        else:                           # request made through something like the socket module
             clientsocket.sendall(bytes(jsonResponse,"utf-8"))
             clientsocket.close()
 
