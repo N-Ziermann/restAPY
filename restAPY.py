@@ -1,9 +1,6 @@
 import socket
 import threading
-import time
 import json
-
-#turn into single API-Class later on
 
 class API:
     def __init__(self, port=80, url="0.0.0.0"):
@@ -22,7 +19,7 @@ class API:
         self.URLpaths[path] = data
 
 
-    def run(self):
+    def run(self):  # start connection listener loop
         self.socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.socket.bind((self.url, self.port))
         self.socket.listen(self.maxConnections)
@@ -33,7 +30,7 @@ class API:
             thread.start()
 
 
-    def handle_request(self, clientsocket, adress):
+    def handle_request(self, clientsocket, adress): # function for responding to api requests in a seperate thread
         requestString = clientsocket.recv(1024).decode("utf-8")
         request = htmlRequestToDict(requestString)
         if request["Path"] in self.URLpaths:
@@ -53,7 +50,7 @@ class API:
 
 
 
-def htmlRequestToDict(request_string):
+def htmlRequestToDict(request_string):  # makes requests from webbrowsers easier to work with
     rowSeperated = request_string.split("\n")
     row1Data = rowSeperated[0].split(" ")
     requestDict = {"Type":row1Data[0], "Path":row1Data[1]}
