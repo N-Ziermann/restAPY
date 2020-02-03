@@ -36,3 +36,81 @@ Code example
         api.setPath("/", {"celsius":5, "fahrenheit":41})
         
         api.run()
+
+
+***************
+Methods in depth
+***************
+
+
+API class
+===============
+
+    The API class is the main building block of restAPY as it contains all of the necessary code to configure and start your rest APIs
+
+    An instance of it can be created like this:
+
+         api = restAPY.API(port, url)
+
+    Both the port and the url argument are optional. Their default values are:
+    
+    - port = 80
+    - url = "0.0.0.0"
+
+    This means that any http connection to the API's server will be treated as a request.
+
+
+Configuring the API 
+==========
+
+Configuring what data gets send (setPath)
+------------------
+
+    To tell the API what data to return to the user after they made a request the setPath method is used.
+
+    It takes a path (String) and JSON compatible data (arrays, dicts, numbers, strings) as arguments and tells the API to return the given data when the giben path is requested.
+
+     data = {"celsius":5, "fahrenheit":41}   
+
+     api.setPath("/data", data)
+
+    This example would tell the API to return the value of the data variable when path /data is requested (http://domain/data)
+
+
+Configuring how the data is presented
+------------------
+
+Indentation
+^^^^^^^^^^^^^^^^^^^^^
+    To make the JSON response from the API more readable the default indentation of it is set to 4. This can be adjusted as follows:
+
+        api.JSONindent = integer_value
+
+
+Sorting the response
+^^^^^^^^^^^^^^^^^^^^^
+    By default the JSON response from the API is not sorted. This can be change by doing the following:
+
+        api.sortJSON = True
+
+        **NOTE:** This can cause complications when using datatypes that can't be compared  with each other like Strings and Integers
+
+
+Configuring the APIs network settings
+------------------
+
+Changing the APIs port
+^^^^^^^^^^^^^^^^^^^^^
+    api.port = new_port_number
+
+
+Changing the APIs url
+^^^^^^^^^^^^^^^^^^^^^
+    api.url = new_url_string
+
+
+Changing the maximum number of connections
+^^^^^^^^^^^^^^^^^^^^^
+    By default the API can handle 16 simultaneous connections. To change this you can do the following:
+
+        api.maxConnections = new_connection_limit_integer
