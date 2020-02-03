@@ -22,6 +22,14 @@ import restAPY
 All of these are part of the default python install and therefore don't need to be installed separately.
 
 
+
+## Documentation
+
+https://restapy.readthedocs.io/
+
+
+
+
 ## Contributors
 
 Niklas Ziermann
