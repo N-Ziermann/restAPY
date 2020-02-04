@@ -5,6 +5,14 @@ A python module for building Rest APIs
 
 ## Installation
 
+Inside the terminal:
+
+```bash
+pip install restAPY
+```
+
+Inside your project:
+
 ```python
 import restAPY
 ```
