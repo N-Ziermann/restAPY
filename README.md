@@ -3,6 +3,21 @@
 
 A python module for building Rest APIs
 
+
+
+## Example
+
+```python
+import restAPY
+api = restAPY.API(80, “0.0.0.0”)
+api.setPath(“/”, {“celsius”:5, “fahrenheit”:41})
+api.run()
+```
+
+Done! Start the python file and you've got a working rest API.
+
+
+
 ## Installation
 
 Inside the terminal:
