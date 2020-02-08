@@ -31,7 +31,7 @@ class API:
 
 
     def handle_request(self, clientsocket, adress): # function for responding to api requests in a seperate thread
-        requestString = clientsocket.recv(1024).decode("utf-8")
+        requestString = clientsocket.recv(4096).decode("utf-8")
         request = htmlRequestToDict(requestString)
         if request["Path"] in self.URLpaths:
             jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
