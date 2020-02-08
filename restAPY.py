@@ -1,6 +1,7 @@
 import socket
 import threading
 import json
+import ssl
 
 class API:
     def __init__(self, port=80, url="0.0.0.0"):
@@ -13,6 +14,10 @@ class API:
         self.URLpaths = {"/" : {"info": ["Default data", "No data given"]}}
         self.sortJSON = False
         self.JSONindent = 4
+        # encryption (https)
+        self.useTLS = False
+        self.certchain = ""
+        self.privkey = ""
 
 
     def setPath(self, path, data):
@@ -24,10 +29,23 @@ class API:
         self.socket.bind((self.url, self.port))
         self.socket.listen(self.maxConnections)
         print("listening on", self.url, self.port )
-        while True:
-            thread = threading.Thread(target=self.handle_request,name="thread",args=(self.socket.accept()))
-            thread.daemon = True
-            thread.start()
+        if(self.useTLS): # encrypted
+            if(self.privkey == ""):
+                raise Exception("You need to set the privkey value to the location of your private key!")
+            if(self.certchain == ""):
+                raise Exception("You need to set the certchain value to the location of your certificat!")
+            context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            context.load_cert_chain(self.certchain, self.privkey)
+            self.secureSocket = context.wrap_socket(self.socket, server_side=True)
+            while True:
+                thread = threading.Thread(target=self.handle_request,name="thread",args=(self.secureSocket.accept()))
+                thread.daemon = True
+                thread.start()
+        else:
+            while True:
+                thread = threading.Thread(target=self.handle_request,name="thread",args=(self.socket.accept()))
+                thread.daemon = True
+                thread.start()
 
 
     def handle_request(self, clientsocket, adress): # function for responding to api requests in a seperate thread
@@ -39,7 +57,7 @@ class API:
             jsonResponse = json.dumps({"Error":"Invalid Path"})
 
         if(request["Type"] == "GET"):   # http request
-            clientsocket.send(b'HTTP/1.0 200 OK\n')
+            clientsocket.send(b'HTTP/1.1 200 OK\n')
             clientsocket.send(b'Content-Type: application/json\n')
             clientsocket.send(b'\n')
             clientsocket.sendall(bytes(jsonResponse,"utf-8"))

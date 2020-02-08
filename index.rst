@@ -114,3 +114,22 @@ Changing the maximum number of connections
     By default the API can handle 16 simultaneous connections. To change this you can do the following:
 
         api.maxConnections = new_connection_limit_integer
+
+Encryption (HTTPS only)
+------------------
+    There are 3 steps to do to activate encryption
+
+    **Activate encryption**
+
+        api.useTLS = True
+
+    **Set cerificate (.cert or .pem)**
+        
+        api.certchain = "path/to/certificate.cert"
+
+    **Set private key**
+
+        api.privkey = "path/to/key.pem"
+
+
+
