@@ -1,5 +1,5 @@
 # restAPY
-**Version 1.0.0**
+**Version 1.0.1**
 
 A python module for building Rest APIs
 
@@ -41,6 +41,7 @@ import restAPY
 - socket
 - threading
 - json
+- ssl
 
 All of these are part of the default python install and therefore don't need to be installed separately.
 
