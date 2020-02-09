@@ -2,9 +2,9 @@
 
 ![alt text](https://github.com/N-Ziermann/restAPY/blob/master/logo.png "Logo Title Text 2")
 
-**Version 1.0.1**
+## Version 1.0.1
 
-A python module for building Rest APIs
+## A python module for building Rest APIs
 
 ## Example
 
