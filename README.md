@@ -1,4 +1,4 @@
-# restAPY [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Just%20found%20this%20python%20module%20for%20creating%20rest%20APIs%20from%20@NiklasZiermann.%20I%20think%20you%20should%20take%20a%20look&hashtags=API,restAPI,python,web,developers)
+# restAPY [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Just%20found%20this%20python%20module%20for%20creating%20rest%20APIs%20from%20@NiklasZiermann.%20I%20think%20you%20should%20take%20a%20look&hashtags=API,restAPI,python,web,developers) [![Open Source Love](https://badges.frapsoft.com/os/mit/mit.svg?v=102)](https://github.com/N-Ziermann/restAPY/blob/master/LICENSE) [![pypi](http://githubbadges.com/star.svg?user=n-ziermann&repo=restAPY&style=flat)](https://github.com/N-Ziermann/restAPY) [![star this repo](https://img.shields.io/pypi/v/restAPY)](https://pypi.org/project/restAPY/)
 
 ![alt text](https://github.com/N-Ziermann/restAPY/blob/master/logo.png "Logo Title Text 2")
 
