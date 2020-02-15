@@ -60,10 +60,10 @@ class API:
             clientsocket.send(b'HTTP/1.1 200 OK\n')
             clientsocket.send(b'Content-Type: application/json\n')
             clientsocket.send(b'\n')
-            clientsocket.sendall(bytes(jsonResponse,"utf-8"))
+            clientsocket.sendall(bytes(jsonResponse,self.encoding))
             clientsocket.close()
         else:                           # request made through something like the socket module
-            clientsocket.sendall(bytes(jsonResponse,"utf-8"))
+            clientsocket.sendall(bytes(jsonResponse,self.encoding))
             clientsocket.close()
 
 
