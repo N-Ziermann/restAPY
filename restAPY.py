@@ -33,7 +33,7 @@ class API:
             if(self.privkey == ""):
                 raise Exception("You need to set the privkey value to the location of your private key!")
             if(self.certchain == ""):
-                raise Exception("You need to set the certchain value to the location of your certificat!")
+                raise Exception("You need to set the certchain value to the location of your certificate!")
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
             context.load_cert_chain(self.certchain, self.privkey)
             self.secureSocket = context.wrap_socket(self.socket, server_side=True)
