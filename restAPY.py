@@ -27,10 +27,11 @@ class API:
 
 
     def run(self):  # start connection listener loop
-        thread = threading.Thread(target=self.http_listener)
-        thread.daemon = True
-        thread.start()
-        self.https_listener()
+	if self.useTLS:
+		thread = threading.Thread(target=self.https_listener)
+		thread.daemon = True
+		thread.start()
+    self.http_listener()
 
 
     def http_listener(self):
@@ -69,7 +70,8 @@ class API:
         if request["Path"] in self.URLpaths:
             jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
         else:
-            jsonResponse = json.dumps({"Error":"Invalid Path"})
+            self.send404(clientsocket)
+            return
 
         if(request["Type"] == "GET"):   # http request
             clientsocket.send(b'HTTP/1.1 200 OK\n')
@@ -94,7 +96,8 @@ class API:
             if request["Path"] in self.URLpaths:
                 jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
             else:
-                jsonResponse = json.dumps({"Error":"Invalid Path"})
+                self.send404(clientsocket)
+                return
 
             if(request["Type"] == "GET"):   # http request
                 clientsocket.send(b'HTTP/1.1 200 OK\n')
@@ -105,6 +108,14 @@ class API:
             else:                           # request made through something like the socket module
                 clientsocket.sendall(bytes(jsonResponse,self.encoding))
                 clientsocket.close()
+
+
+    def send404(self, client):              # sends 404 Error to client if something went wrong
+        client.send(b'HTTP/1.1 404 Not Found\n')
+        client.send(b'Content-Type: text/html\n')
+        client.send(b'\n')
+        client.sendall(b'404 Not Found')
+        client.close()
 
 
 
