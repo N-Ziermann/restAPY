@@ -117,9 +117,9 @@ Changing the maximum number of connections
 
 Encryption (HTTPS only)
 ------------------
-    There are 3 steps to do to activate encryption
+    The following steps need to be taken to set up encryption
 
-    **Activate encryption**
+    **Activate encryption (off by default)**
 
         api.useTLS = True
 
@@ -131,5 +131,11 @@ Encryption (HTTPS only)
 
         api.privkey = "path/to/key.pem"
 
+    **Turn HTTP Redirect on/off (on by default)**
 
+        api.redirectHttp = True
+
+    **Choose the https port (443 by default)**
+
+        api.httpsPort = 443
 
