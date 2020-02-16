@@ -16,6 +16,8 @@ class API:
         self.JSONindent = 4
         # encryption (https)
         self.useTLS = False
+        self.httpsPort = 443
+        self.redirectHttp = True
         self.certchain = ""
         self.privkey = ""
 
@@ -25,30 +27,43 @@ class API:
 
 
     def run(self):  # start connection listener loop
-        self.socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        self.socket.bind((self.url, self.port))
-        self.socket.listen(self.maxConnections)
-        print("listening on", self.url, self.port )
-        if(self.useTLS): # encrypted
-            if(self.privkey == ""):
+        thread = threading.Thread(target=self.http_listener)
+        thread.daemon = True
+        thread.start()
+        self.https_listener()
+
+
+    def http_listener(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind((self.url, self.port))
+        s.listen(self.maxConnections)
+        while True:
+            thread = threading.Thread(target=self.handle_http_request,name="thread",args=(s.accept()))
+            thread.daemon = True
+            thread.start()
+
+
+    def https_listener(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind((self.url, self.httpsPort))
+        s.listen(self.maxConnections)
+        if self.useTLS:
+            if self.privkey == "":
                 raise Exception("You need to set the privkey value to the location of your private key!")
             if(self.certchain == ""):
                 raise Exception("You need to set the certchain value to the location of your certificate!")
-            context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)#
             context.load_cert_chain(self.certchain, self.privkey)
-            self.secureSocket = context.wrap_socket(self.socket, server_side=True)
+            secureSocket = context.wrap_socket(s, server_side=True)
             while True:
-                thread = threading.Thread(target=self.handle_request,name="thread",args=(self.secureSocket.accept()))
+                thread = threading.Thread(target=self.handle_https_request,name="thread",args=(secureSocket.accept()))
                 thread.daemon = True
                 thread.start()
         else:
-            while True:
-                thread = threading.Thread(target=self.handle_request,name="thread",args=(self.socket.accept()))
-                thread.daemon = True
-                thread.start()
+            raise Exception("Encryption is not turned on")
 
 
-    def handle_request(self, clientsocket, address): # function for responding to api requests in a seperate thread
+    def handle_https_request(self, clientsocket, address): # function for responding to api requests in a seperate thread
         requestString = clientsocket.recv(4096).decode("utf-8")
         request = htmlRequestToDict(requestString)
         if request["Path"] in self.URLpaths:
@@ -65,6 +80,31 @@ class API:
         else:                           # request made through something like the socket module
             clientsocket.sendall(bytes(jsonResponse,self.encoding))
             clientsocket.close()
+
+
+    def handle_http_request(self, clientsocket, address): # function for responding to api requests in a seperate thread
+        requestString = clientsocket.recv(4096).decode("utf-8")
+        request = htmlRequestToDict(requestString)
+        if self.redirectHttp:
+            redirect = "https://" + request["Host"].strip() + request["Path"].strip()
+            clientsocket.send(b'HTTP/1.1 301 Moved Permanently\n')
+            clientsocket.send(bytes('Location: ' + redirect + '\n', self.encoding))
+            clientsocket.close()
+        else:
+            if request["Path"] in self.URLpaths:
+                jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
+            else:
+                jsonResponse = json.dumps({"Error":"Invalid Path"})
+
+            if(request["Type"] == "GET"):   # http request
+                clientsocket.send(b'HTTP/1.1 200 OK\n')
+                clientsocket.send(b'Content-Type: application/json\n')
+                clientsocket.send(b'\n')
+                clientsocket.sendall(bytes(jsonResponse,self.encoding))
+                clientsocket.close()
+            else:                           # request made through something like the socket module
+                clientsocket.sendall(bytes(jsonResponse,self.encoding))
+                clientsocket.close()
 
 
 
