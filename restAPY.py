@@ -27,11 +27,11 @@ class API:
 
 
     def run(self):  # start connection listener loop
-	if self.useTLS:
-		thread = threading.Thread(target=self.https_listener)
-		thread.daemon = True
-		thread.start()
-    self.http_listener()
+    	if self.useTLS:
+    		thread = threading.Thread(target=self.https_listener)
+    		thread.daemon = True
+    		thread.start()
+        self.http_listener()
 
 
     def http_listener(self):
