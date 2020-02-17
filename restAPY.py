@@ -57,9 +57,13 @@ class API:
             context.load_cert_chain(self.certchain, self.privkey)
             secureSocket = context.wrap_socket(s, server_side=True)
             while True:
-                thread = threading.Thread(target=self.handle_https_request,name="thread",args=(secureSocket.accept()))
-                thread.daemon = True
-                thread.start()
+                try:
+                    thread = threading.Thread(target=self.handle_https_request,name="thread",args=(secureSocket.accept()))
+                    thread.daemon = True
+                    thread.start()
+                except:
+                    print("HTTP Request over HTTPS")
+                    return
         else:
             raise Exception("Encryption is not turned on")
 
