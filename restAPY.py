@@ -3,6 +3,36 @@ import threading
 import json
 import ssl
 
+
+# do post request by letting the user create a function to handle requests and pass it into the API class throguh a method
+
+
+'''HOW POST REQUESTS WILL BE SET:
+
+###### "Request" will contain a structured version of JSON and basic HTML Headers
+
+
+
+###### dev creates function to handle request:
+
+def foo(request):
+    if request.type == "POST":
+        ...
+        pass
+    ...
+    return data # this string will be converted to JSONString and sent
+
+
+##### dev then puts function into URLpaths like any JSONData
+
+api.URLpaths["/Post"] = foo
+
+
+##### API class can interpret this like that:
+
+api.URLpaths["/Post"](request)
+
+'''
 class API:
     def __init__(self, port=80, url="0.0.0.0"):
         # connection info:
@@ -27,11 +57,13 @@ class API:
 
 
     def run(self):  # start connection listener loop
-	if self.useTLS:
-		thread = threading.Thread(target=self.https_listener)
-		thread.daemon = True
-		thread.start()
-    self.http_listener()
+        self.http_listener()
+        if self.useTLS:
+            thread = threading.Thread(target=self.https_listener)
+            thread.daemon = True
+            thread.start()
+        self.http_listener()
+
 
 
     def http_listener(self):
@@ -91,7 +123,12 @@ class API:
     def handle_http_request(self, clientsocket, address): # function for responding to api requests in a seperate thread
         requestString = clientsocket.recv(4096).decode("utf-8")
         request = htmlRequestToDict(requestString)
-        if self.redirectHttp:
+        print(request)
+        import json
+        print(request["JSON"])
+        print(json.loads(request["JSON"]))
+
+        if self.redirectHttp and self.useTLS:
             redirect = "https://" + request["Host"].strip() + request["Path"].strip()
             clientsocket.send(b'HTTP/1.1 301 Moved Permanently\n')
             clientsocket.send(bytes('Location: ' + redirect + '\n', self.encoding))
@@ -126,18 +163,26 @@ class API:
 def htmlRequestToDict(request_string):  # makes requests from webbrowsers easier to work with
     rowSeperated = request_string.split("\n")
     row1Data = rowSeperated[0].split(" ")
-    requestDict = {"Type":row1Data[0], "Path":row1Data[1]}
+    requestDict = {"Type":row1Data[0], "Path":row1Data[1], "JSON":""}
+    jsonStarted = False     # in case of post: tells code wether or not headers are done
     for i in range(1, len(rowSeperated)):
-        if(len(rowSeperated[i])>1): #prevent bugs caused by empty rows at end message
+        print(rowSeperated[i])
+        print(len(rowSeperated[i]))
+        if(rowSeperated[i] == "\r" or rowSeperated[i] == "\n"):
+            jsonStarted = True
+        if(len(rowSeperated[i])>1):
             key = ""
             value = ""
             j = 0
-            while rowSeperated[i][j] != ":":
-                key += rowSeperated[i][j]
-                j+=1
-            j+=1    #skip ":"
-            while j < len(rowSeperated[i]):
-                value += rowSeperated[i][j]
-                j+=1
-            requestDict[key] = value
+            if not jsonStarted:
+                while rowSeperated[i][j] != ":":
+                    key += rowSeperated[i][j]
+                    j+=1
+                j+=1    #skip ":"
+                while j < len(rowSeperated[i]):
+                    value += rowSeperated[i][j]
+                    j+=1
+                requestDict[key] = value
+            else:
+                requestDict["JSON"] += rowSeperated[i]
     return requestDict
