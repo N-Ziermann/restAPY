@@ -32,6 +32,14 @@ api.URLpaths["/Post"] = foo
 
 api.URLpaths["/Post"](request)
 
+
+##### API class checks wether a function was put in like this:
+
+if type( api.URLpaths["/Post"] ).__name__ == "function":
+    # function
+else:
+    # data
+
 '''
 class API:
     def __init__(self, port=80, url="0.0.0.0"):
@@ -123,10 +131,6 @@ class API:
     def handle_http_request(self, clientsocket, address): # function for responding to api requests in a seperate thread
         requestString = clientsocket.recv(4096).decode("utf-8")
         request = htmlRequestToDict(requestString)
-        print(request)
-        import json
-        print(request["JSON"])
-        print(json.loads(request["JSON"]))
 
         if self.redirectHttp and self.useTLS:
             redirect = "https://" + request["Host"].strip() + request["Path"].strip()
@@ -135,20 +139,23 @@ class API:
             clientsocket.close()
         else:
             if request["Path"] in self.URLpaths:
-                jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
+                if type(self.URLpaths[request["Path"]]).__name__ != "function":
+                    jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
+                else:                   # if dev wants to do custom manipulation with his data
+                    response = self.URLpaths[request["Path"]](request)
+                    if response is None:
+                        jsonResponse = json.dumps("Error no value to return. Please report to the administrator", indent=self.JSONindent, sort_keys=self.sortJSON)
+                    else:
+                        jsonResponse = json.dumps(response, indent=self.JSONindent, sort_keys=self.sortJSON)
             else:
                 self.send404(clientsocket)
                 return
 
-            if(request["Type"] == "GET"):   # http request
-                clientsocket.send(b'HTTP/1.1 200 OK\n')
-                clientsocket.send(b'Content-Type: application/json\n')
-                clientsocket.send(b'\n')
-                clientsocket.sendall(bytes(jsonResponse,self.encoding))
-                clientsocket.close()
-            else:                           # request made through something like the socket module
-                clientsocket.sendall(bytes(jsonResponse,self.encoding))
-                clientsocket.close()
+            clientsocket.send(b'HTTP/1.1 200 OK\n')
+            clientsocket.send(b'Content-Type: application/json\n')
+            clientsocket.send(b'\n')
+            clientsocket.sendall(bytes(jsonResponse,self.encoding))
+            clientsocket.close()
 
 
     def send404(self, client):              # sends 404 Error to client if something went wrong
