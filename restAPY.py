@@ -3,44 +3,6 @@ import threading
 import json
 import ssl
 
-
-# do post request by letting the user create a function to handle requests and pass it into the API class throguh a method
-
-
-'''HOW POST REQUESTS WILL BE SET:
-
-###### "Request" will contain a structured version of JSON and basic HTML Headers
-
-
-
-###### dev creates function to handle request:
-
-def foo(request):
-    if request.type == "POST":
-        ...
-        pass
-    ...
-    return data # this string will be converted to JSONString and sent
-
-
-##### dev then puts function into URLpaths like any JSONData
-
-api.URLpaths["/Post"] = foo
-
-
-##### API class can interpret this like that:
-
-api.URLpaths["/Post"](request)
-
-
-##### API class checks wether a function was put in like this:
-
-if type( api.URLpaths["/Post"] ).__name__ == "function":
-    # function
-else:
-    # data
-
-'''
 class API:
     def __init__(self, port=80, url="0.0.0.0"):
         # connection info:
@@ -65,7 +27,6 @@ class API:
 
 
     def run(self):  # start connection listener loop
-        self.http_listener()
         if self.useTLS:
             thread = threading.Thread(target=self.https_listener)
             thread.daemon = True
@@ -111,26 +72,32 @@ class API:
     def handle_https_request(self, clientsocket, address): # function for responding to api requests in a seperate thread
         requestString = clientsocket.recv(4096).decode("utf-8")
         request = htmlRequestToDict(requestString)
+        request["Client-Info"] = address
+
         if request["Path"] in self.URLpaths:
-            jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
+            if type(self.URLpaths[request["Path"]]).__name__ != "function":
+                jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
+            else:                   # if dev wants to do custom manipulation with his data
+                response = self.URLpaths[request["Path"]](request)
+                if response is None:
+                    jsonResponse = json.dumps("Error no value to return. Please report to the administrator", indent=self.JSONindent, sort_keys=self.sortJSON)
+                else:
+                    jsonResponse = json.dumps(response, indent=self.JSONindent, sort_keys=self.sortJSON)
         else:
             self.send404(clientsocket)
             return
 
-        if(request["Type"] == "GET"):   # http request
-            clientsocket.send(b'HTTP/1.1 200 OK\n')
-            clientsocket.send(b'Content-Type: application/json\n')
-            clientsocket.send(b'\n')
-            clientsocket.sendall(bytes(jsonResponse,self.encoding))
-            clientsocket.close()
-        else:                           # request made through something like the socket module
-            clientsocket.sendall(bytes(jsonResponse,self.encoding))
-            clientsocket.close()
+        clientsocket.send(b'HTTP/1.1 200 OK\n')
+        clientsocket.send(b'Content-Type: application/json\n')
+        clientsocket.send(b'\n')
+        clientsocket.sendall(bytes(jsonResponse,self.encoding))
+        clientsocket.close()
 
 
     def handle_http_request(self, clientsocket, address): # function for responding to api requests in a seperate thread
         requestString = clientsocket.recv(4096).decode("utf-8")
         request = htmlRequestToDict(requestString)
+        request["Client-Info"] = address
 
         if self.redirectHttp and self.useTLS:
             redirect = "https://" + request["Host"].strip() + request["Path"].strip()
@@ -173,8 +140,6 @@ def htmlRequestToDict(request_string):  # makes requests from webbrowsers easier
     requestDict = {"Type":row1Data[0], "Path":row1Data[1], "JSON":""}
     jsonStarted = False     # in case of post: tells code wether or not headers are done
     for i in range(1, len(rowSeperated)):
-        print(rowSeperated[i])
-        print(len(rowSeperated[i]))
         if(rowSeperated[i] == "\r" or rowSeperated[i] == "\n"):
             jsonStarted = True
         if(len(rowSeperated[i])>1):
@@ -189,7 +154,7 @@ def htmlRequestToDict(request_string):  # makes requests from webbrowsers easier
                 while j < len(rowSeperated[i]):
                     value += rowSeperated[i][j]
                     j+=1
-                requestDict[key] = value
+                requestDict[key] = value.strip()
             else:
                 requestDict["JSON"] += rowSeperated[i]
     return requestDict
