@@ -64,7 +64,6 @@ class API:
                     thread.start()
                 except:
                     print("HTTP Request over HTTPS")
-                    return
         else:
             raise Exception("Encryption is not turned on")
 
