@@ -99,7 +99,7 @@ class API:
         request["Client-Info"] = address
 
         if self.redirectHttp and self.useTLS:
-            redirect = "https://" + request["Host"].strip() + request["Path"].strip()
+            redirect = "https://" + request["Host"] + request["Path"]
             clientsocket.send(b'HTTP/1.1 301 Moved Permanently\n')
             clientsocket.send(bytes('Location: ' + redirect + '\n', self.encoding))
             clientsocket.close()
@@ -136,7 +136,7 @@ class API:
 def htmlRequestToDict(request_string):  # makes requests from webbrowsers easier to work with
     rowSeperated = request_string.split("\n")
     row1Data = rowSeperated[0].split(" ")
-    requestDict = {"Type":row1Data[0], "Path":row1Data[1], "JSON":""}
+    requestDict = {"Type":row1Data[0].strip(), "Path":row1Data[1].strip(), "JSON":""}
     jsonStarted = False     # in case of post: tells code wether or not headers are done
     for i in range(1, len(rowSeperated)):
         if(rowSeperated[i] == "\r" or rowSeperated[i] == "\n"):
