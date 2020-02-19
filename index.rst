@@ -83,11 +83,13 @@ Dynamic Data
 
     When you want the API to return dynamic data (for example when it receives a POST request) you put still use the setPath function, but it now takes a function as an argument instead of the returnable data itself.
 
+	import json
+
         def foo(request):
 
             if request["Type"] == "POST":
 
-                return request["JSON"]
+                return json.loads(request["JSON"])
 
             elif request["Type"] == "GET":
 
