@@ -27,11 +27,12 @@ class API:
 
 
     def run(self):  # start connection listener loop
-    	if self.useTLS:
-    		thread = threading.Thread(target=self.https_listener)
-    		thread.daemon = True
-    		thread.start()
+        if self.useTLS:
+            thread = threading.Thread(target=self.https_listener)
+            thread.daemon = True
+            thread.start()
         self.http_listener()
+
 
 
     def http_listener(self):
@@ -63,7 +64,6 @@ class API:
                     thread.start()
                 except:
                     print("HTTP Request over HTTPS")
-                    return
         else:
             raise Exception("Encryption is not turned on")
 
@@ -71,47 +71,57 @@ class API:
     def handle_https_request(self, clientsocket, address): # function for responding to api requests in a seperate thread
         requestString = clientsocket.recv(4096).decode("utf-8")
         request = htmlRequestToDict(requestString)
+        request["Client-Info"] = address
+
         if request["Path"] in self.URLpaths:
-            jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
+            if type(self.URLpaths[request["Path"]]).__name__ != "function":
+                jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
+            else:                   # if dev wants to do custom manipulation with his data
+                response = self.URLpaths[request["Path"]](request)
+                if response is None:
+                    jsonResponse = json.dumps("Error no value to return. Please report to the administrator", indent=self.JSONindent, sort_keys=self.sortJSON)
+                else:
+                    jsonResponse = json.dumps(response, indent=self.JSONindent, sort_keys=self.sortJSON)
         else:
             self.send404(clientsocket)
             return
 
-        if(request["Type"] == "GET"):   # http request
-            clientsocket.send(b'HTTP/1.1 200 OK\n')
-            clientsocket.send(b'Content-Type: application/json\n')
-            clientsocket.send(b'\n')
-            clientsocket.sendall(bytes(jsonResponse,self.encoding))
-            clientsocket.close()
-        else:                           # request made through something like the socket module
-            clientsocket.sendall(bytes(jsonResponse,self.encoding))
-            clientsocket.close()
+        clientsocket.send(b'HTTP/1.1 200 OK\n')
+        clientsocket.send(b'Content-Type: application/json\n')
+        clientsocket.send(b'\n')
+        clientsocket.sendall(bytes(jsonResponse,self.encoding))
+        clientsocket.close()
 
 
     def handle_http_request(self, clientsocket, address): # function for responding to api requests in a seperate thread
         requestString = clientsocket.recv(4096).decode("utf-8")
         request = htmlRequestToDict(requestString)
-        if self.redirectHttp:
-            redirect = "https://" + request["Host"].strip() + request["Path"].strip()
+        request["Client-Info"] = address
+
+        if self.redirectHttp and self.useTLS:
+            redirect = "https://" + request["Host"] + request["Path"]
             clientsocket.send(b'HTTP/1.1 301 Moved Permanently\n')
             clientsocket.send(bytes('Location: ' + redirect + '\n', self.encoding))
             clientsocket.close()
         else:
             if request["Path"] in self.URLpaths:
-                jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
+                if type(self.URLpaths[request["Path"]]).__name__ != "function":
+                    jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
+                else:                   # if dev wants to do custom manipulation with his data
+                    response = self.URLpaths[request["Path"]](request)
+                    if response is None:
+                        jsonResponse = json.dumps("Error no value to return. Please report to the administrator", indent=self.JSONindent, sort_keys=self.sortJSON)
+                    else:
+                        jsonResponse = json.dumps(response, indent=self.JSONindent, sort_keys=self.sortJSON)
             else:
                 self.send404(clientsocket)
                 return
 
-            if(request["Type"] == "GET"):   # http request
-                clientsocket.send(b'HTTP/1.1 200 OK\n')
-                clientsocket.send(b'Content-Type: application/json\n')
-                clientsocket.send(b'\n')
-                clientsocket.sendall(bytes(jsonResponse,self.encoding))
-                clientsocket.close()
-            else:                           # request made through something like the socket module
-                clientsocket.sendall(bytes(jsonResponse,self.encoding))
-                clientsocket.close()
+            clientsocket.send(b'HTTP/1.1 200 OK\n')
+            clientsocket.send(b'Content-Type: application/json\n')
+            clientsocket.send(b'\n')
+            clientsocket.sendall(bytes(jsonResponse,self.encoding))
+            clientsocket.close()
 
 
     def send404(self, client):              # sends 404 Error to client if something went wrong
@@ -126,18 +136,24 @@ class API:
 def htmlRequestToDict(request_string):  # makes requests from webbrowsers easier to work with
     rowSeperated = request_string.split("\n")
     row1Data = rowSeperated[0].split(" ")
-    requestDict = {"Type":row1Data[0], "Path":row1Data[1]}
+    requestDict = {"Type":row1Data[0].strip(), "Path":row1Data[1].strip(), "JSON":""}
+    jsonStarted = False     # in case of post: tells code wether or not headers are done
     for i in range(1, len(rowSeperated)):
-        if(len(rowSeperated[i])>1): #prevent bugs caused by empty rows at end message
+        if(rowSeperated[i] == "\r" or rowSeperated[i] == "\n"):
+            jsonStarted = True
+        if(len(rowSeperated[i])>1):
             key = ""
             value = ""
             j = 0
-            while rowSeperated[i][j] != ":":
-                key += rowSeperated[i][j]
-                j+=1
-            j+=1    #skip ":"
-            while j < len(rowSeperated[i]):
-                value += rowSeperated[i][j]
-                j+=1
-            requestDict[key] = value
+            if not jsonStarted:
+                while rowSeperated[i][j] != ":":
+                    key += rowSeperated[i][j]
+                    j+=1
+                j+=1    #skip ":"
+                while j < len(rowSeperated[i]):
+                    value += rowSeperated[i][j]
+                    j+=1
+                requestDict[key] = value.strip()
+            else:
+                requestDict["JSON"] += rowSeperated[i]
     return requestDict

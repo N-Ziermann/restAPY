@@ -63,12 +63,14 @@ API class
 Configuring the API 
 ==========
 
-Configuring what data gets send (setPath)
+Configuring what data gets send/processed (setPath)
 ------------------
 
     To tell the API what data to return to the user after they made a request the setPath method is used.
 
-    It takes a path (String) and JSON compatible data (arrays, dicts, numbers, strings) as arguments and tells the API to return the given data when the giben path is requested.
+Static Data
+^^^^^^^^^^^^^^^^^^^^^
+    The function takes a path (String) and JSON compatible data (arrays, dicts, numbers, strings) as arguments and tells the API to return the given data when the giben path is requested.
 
      data = {"celsius":5, "fahrenheit":41}   
 
@@ -76,6 +78,30 @@ Configuring what data gets send (setPath)
 
     This example would tell the API to return the value of the data variable when path /data is requested (http://domain/data)
 
+Dynamic Data
+^^^^^^^^^^^^^^^^^^^^^
+
+    When you want the API to return dynamic data (for example when it receives a POST request) you put still use the setPath function, but it now takes a function as an argument instead of the returnable data itself.
+
+        def foo(request):
+
+            if request["Type"] == "POST":
+
+                return request["JSON"]
+
+            elif request["Type"] == "GET":
+
+                return [1,2,3,4]
+
+        api.setPath("/dynamic", foo)
+
+    In this case the API will return all JSON information about the HTTP request when a POST-Request is made, whilst just returning [1,2,3,4] when a GET-Request is made.
+
+    **NOTE1**: The data the function returns needs to be convertible into JSON.
+
+    **NOTE2**: Do NOT put the "()" after the function name when giving a function as an argument to setPath()
+
+    **NOTE3**: Your function needs to take request as an argument as this variable will contain all the information about the request the user made
 
 Configuring how the data is presented
 ------------------
