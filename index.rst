@@ -9,7 +9,7 @@ Introduction
 
     It therefore can be used to make JSON data from your projects easily accessible through a webbrowser or through API requests.
 
-    **Note**: This documentation contains all the useful information about version 1.0.0
+    **Note**: This documentation contains all the useful information about version 1.2.0
 
 ***************
 Dependencies
@@ -33,7 +33,7 @@ Code example
         
         api = restAPY.API(8000, "localhost")
 
-        api.setPath("/", {"celsius":5, "fahrenheit":41})
+        api.set_path("/", {"celsius":5, "fahrenheit":41})
         
         api.run()
 
@@ -71,10 +71,10 @@ Debugging (on by default)
         api.debug = False
 
 
-Configuring what data gets send/processed (setPath)
+Configuring what data gets send/processed (set_path)
 ------------------
 
-    To tell the API what data to return to the user after they made a request the setPath method is used.
+    To tell the API what data to return to the user after they made a request the set_path method is used.
 
 Static Data
 ^^^^^^^^^^^^^^^^^^^^^
@@ -82,14 +82,14 @@ Static Data
 
      data = {"celsius":5, "fahrenheit":41}   
 
-     api.setPath("/data", data)
+     api.set_path("/data", data)
 
     This example would tell the API to return the value of the data variable when path /data is requested (http://domain/data)
 
 Dynamic Data
 ^^^^^^^^^^^^^^^^^^^^^
 
-    When you want the API to return dynamic data (for example when it receives a POST request) you put still use the setPath function, but it now takes a function as an argument instead of the returnable data itself.
+    When you want the API to return dynamic data (for example when it receives a POST request) you put still use the set_path function, but it now takes a function as an argument instead of the returnable data itself.
 
 	import json
 
@@ -103,13 +103,13 @@ Dynamic Data
 
                 return [1,2,3,4]
 
-        api.setPath("/dynamic", foo)
+        api.set_path("/dynamic", foo)
 
     In this case the API will return all JSON information about the HTTP request when a POST-Request is made, whilst just returning [1,2,3,4] when a GET-Request is made.
 
     **NOTE1**: The data the function returns needs to be convertible into JSON.
 
-    **NOTE2**: Do NOT put the "()" after the function name when giving a function as an argument to setPath()
+    **NOTE2**: Do NOT put the "()" after the function name when giving a function as an argument to set_path()
 
     **NOTE3**: Your function needs to take request as an argument as this variable will contain all the information about the request the user made
 
@@ -120,14 +120,14 @@ Indentation
 ^^^^^^^^^^^^^^^^^^^^^
     To make the JSON response from the API more readable the default indentation of it is set to 4. This can be adjusted as follows:
 
-        api.JSONindent = integer_value
+        api.json_indent = integer_value
 
 
 Sorting the response
 ^^^^^^^^^^^^^^^^^^^^^
     By default the JSON response from the API is not sorted. This can be change by doing the following:
 
-        api.sortJSON = True
+        api.sort_json = True
 
         **NOTE:** This can cause complications when using datatypes that can't be compared  with each other like Strings and Integers
 
@@ -149,7 +149,7 @@ Changing the maximum number of connections
 ^^^^^^^^^^^^^^^^^^^^^
     By default the API can handle 16 simultaneous connections. To change this you can do the following:
 
-        api.maxConnections = new_connection_limit_integer
+        api.max_connections = new_connection_limit_integer
 
 Encryption (HTTPS only)
 ------------------
@@ -157,7 +157,7 @@ Encryption (HTTPS only)
 
     **Activate encryption (off by default)**
 
-        api.useTLS = True
+        api.use_tls = True
 
     **Set cerificate (.cert or .pem)**
         
@@ -169,9 +169,9 @@ Encryption (HTTPS only)
 
     **Turn HTTP Redirect on/off (on by default)**
 
-        api.redirectHttp = True
+        api.redirect_http = True
 
     **Choose the https port (443 by default)**
 
-        api.httpsPort = 443
+        api.https_port = 443
 

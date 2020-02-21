@@ -8,28 +8,28 @@ class API:
         # connection info:
         self.port = port
         self.url = url
-        self.maxConnections = 16
+        self.max_connections = 16
         self.encoding = "utf-8"
         # JSON settings
-        self.URLpaths = {"/" : {"info": ["Default data", "No data given"]}}
-        self.sortJSON = False
-        self.JSONindent = 4
+        self.url_paths = {"/" : {"info": ["Default data", "No data given"]}}
+        self.sort_json = False
+        self.json_indent = 4
         # encryption (https)
-        self.useTLS = False
-        self.httpsPort = 443
-        self.redirectHttp = True
+        self.use_tls = False
+        self.https_port = 443
+        self.redirect_http = True
         self.certchain = ""
         self.privkey = ""
         # other
         self.debug = True
 
 
-    def setPath(self, path, data):
-        self.URLpaths[path] = data
+    def set_path(self, path, data):
+        self.url_paths[path] = data
 
 
     def run(self):  # start connection listener loop
-        if self.useTLS:
+        if self.use_tls:
             thread = threading.Thread(target=self.https_listener)
             thread.daemon = True
             thread.start()
@@ -40,7 +40,7 @@ class API:
     def http_listener(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((self.url, self.port))
-        s.listen(self.maxConnections)
+        s.listen(self.max_connections)
         while True:
             thread = threading.Thread(target=self.handle_http_request,name="thread",args=(s.accept()))
             thread.daemon = True
@@ -49,9 +49,9 @@ class API:
 
     def https_listener(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((self.url, self.httpsPort))
-        s.listen(self.maxConnections)
-        if self.useTLS:
+        s.bind((self.url, self.https_port))
+        s.listen(self.max_connections)
+        if self.use_tls:
             if self.privkey == "":
                 raise Exception("You need to set the privkey value to the location of your private key!")
             if(self.certchain == ""):
@@ -80,17 +80,17 @@ class API:
                 print("Invalid Request")
             return
         request["Client-Info"] = address
-        if request["Path"] in self.URLpaths:
-            if type(self.URLpaths[request["Path"]]).__name__ != "function":
-                jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
+        if request["Path"] in self.url_paths:
+            if type(self.url_paths[request["Path"]]).__name__ != "function":
+                jsonResponse = json.dumps(self.url_paths[request["Path"]], indent=self.json_indent, sort_keys=self.sort_json)
             else:                   # if dev wants to do custom manipulation with his data
-                response = self.URLpaths[request["Path"]](request)
+                response = self.url_paths[request["Path"]](request)
                 if response is None:
-                    jsonResponse = json.dumps("Error no value to return. Please report to the administrator", indent=self.JSONindent, sort_keys=self.sortJSON)
+                    jsonResponse = json.dumps("Error no value to return. Please report to the administrator", indent=self.json_indent, sort_keys=self.sort_json)
                 else:
-                    jsonResponse = json.dumps(response, indent=self.JSONindent, sort_keys=self.sortJSON)
+                    jsonResponse = json.dumps(response, indent=self.json_indent, sort_keys=self.sort_json)
         else:
-            self.send404(clientsocket)
+            self.send_404(clientsocket)
             return
 
         clientsocket.send(b'HTTP/1.1 200 OK\n')
@@ -110,23 +110,23 @@ class API:
             return
         request["Client-Info"] = address
 
-        if self.redirectHttp and self.useTLS:
+        if self.redirect_http and self.useTLS:
             redirect = "https://" + request["Host"] + request["Path"]
             clientsocket.send(b'HTTP/1.1 301 Moved Permanently\n')
             clientsocket.send(bytes('Location: ' + redirect + '\n', self.encoding))
             clientsocket.close()
         else:
-            if request["Path"] in self.URLpaths:
-                if type(self.URLpaths[request["Path"]]).__name__ != "function":
-                    jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
+            if request["Path"] in self.url_paths:
+                if type(self.url_paths[request["Path"]]).__name__ != "function":
+                    jsonResponse = json.dumps(self.url_paths[request["Path"]], indent=self.json_indent, sort_keys=self.sort_json)
                 else:                   # if dev wants to do custom manipulation with his data
-                    response = self.URLpaths[request["Path"]](request)
+                    response = self.url_paths[request["Path"]](request)
                     if response is None:
-                        jsonResponse = json.dumps("Error no value to return. Please report to the administrator", indent=self.JSONindent, sort_keys=self.sortJSON)
+                        jsonResponse = json.dumps("Error no value to return. Please report to the administrator", indent=self.json_indent, sort_keys=self.sort_json)
                     else:
-                        jsonResponse = json.dumps(response, indent=self.JSONindent, sort_keys=self.sortJSON)
+                        jsonResponse = json.dumps(response, indent=self.json_indent, sort_keys=self.sort_json)
             else:
-                self.send404(clientsocket)
+                self.send_404(clientsocket)
                 return
 
             clientsocket.send(b'HTTP/1.1 200 OK\n')
@@ -136,7 +136,7 @@ class API:
             clientsocket.close()
 
 
-    def send404(self, client):              # sends 404 Error to client if something went wrong
+    def send_404(self, client):              # sends 404 Error to client if something went wrong
         client.send(b'HTTP/1.1 404 Not Found\n')
         client.send(b'Content-Type: text/html\n')
         client.send(b'\n')
