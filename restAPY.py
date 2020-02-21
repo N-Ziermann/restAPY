@@ -58,10 +58,10 @@ class API:
                 raise Exception("You need to set the certchain value to the location of your certificate!")
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)#
             context.load_cert_chain(self.certchain, self.privkey)
-            secureSocket = context.wrap_socket(s, server_side=True)
+            secure_socket = context.wrap_socket(s, server_side=True)
             while True:
                 try:
-                    thread = threading.Thread(target=self.handle_https_request,name="thread",args=(secureSocket.accept()))
+                    thread = threading.Thread(target=self.handle_https_request,name="thread",args=(secure_socket.accept()))
                     thread.daemon = True
                     thread.start()
                 except:
@@ -72,9 +72,9 @@ class API:
 
 
     def handle_https_request(self, clientsocket, address): # function for responding to api requests in a seperate thread
-        requestString = clientsocket.recv(4096).decode("utf-8")
+        request_string = clientsocket.recv(4096).decode("utf-8")
         try:
-            request = htmlRequestToDict(requestString)
+            request = html_request_to_dict(request_string)
         except:
             if self.debug:
                 print("Invalid Request")
@@ -82,13 +82,13 @@ class API:
         request["Client-Info"] = address
         if request["Path"] in self.url_paths:
             if type(self.url_paths[request["Path"]]).__name__ != "function":
-                jsonResponse = json.dumps(self.url_paths[request["Path"]], indent=self.json_indent, sort_keys=self.sort_json)
+                json_response = json.dumps(self.url_paths[request["Path"]], indent=self.json_indent, sort_keys=self.sort_json)
             else:                   # if dev wants to do custom manipulation with his data
                 response = self.url_paths[request["Path"]](request)
                 if response is None:
-                    jsonResponse = json.dumps("Error no value to return. Please report to the administrator", indent=self.json_indent, sort_keys=self.sort_json)
+                    json_response = json.dumps("Error no value to return. Please report to the administrator", indent=self.json_indent, sort_keys=self.sort_json)
                 else:
-                    jsonResponse = json.dumps(response, indent=self.json_indent, sort_keys=self.sort_json)
+                    json_response = json.dumps(response, indent=self.json_indent, sort_keys=self.sort_json)
         else:
             self.send_404(clientsocket)
             return
@@ -96,14 +96,14 @@ class API:
         clientsocket.send(b'HTTP/1.1 200 OK\n')
         clientsocket.send(b'Content-Type: application/json\n')
         clientsocket.send(b'\n')
-        clientsocket.sendall(bytes(jsonResponse,self.encoding))
+        clientsocket.sendall(bytes(json_response,self.encoding))
         clientsocket.close()
 
 
     def handle_http_request(self, clientsocket, address): # function for responding to api requests in a seperate thread
-        requestString = clientsocket.recv(4096).decode("utf-8")
+        request_string = clientsocket.recv(4096).decode("utf-8")
         try:
-            request = htmlRequestToDict(requestString)
+            request = html_request_to_dict(request_string)
         except:
             if self.debug:
                 print("Invalid Request")
@@ -118,13 +118,13 @@ class API:
         else:
             if request["Path"] in self.url_paths:
                 if type(self.url_paths[request["Path"]]).__name__ != "function":
-                    jsonResponse = json.dumps(self.url_paths[request["Path"]], indent=self.json_indent, sort_keys=self.sort_json)
+                    json_response = json.dumps(self.url_paths[request["Path"]], indent=self.json_indent, sort_keys=self.sort_json)
                 else:                   # if dev wants to do custom manipulation with his data
                     response = self.url_paths[request["Path"]](request)
                     if response is None:
-                        jsonResponse = json.dumps("Error no value to return. Please report to the administrator", indent=self.json_indent, sort_keys=self.sort_json)
+                        json_response = json.dumps("Error no value to return. Please report to the administrator", indent=self.json_indent, sort_keys=self.sort_json)
                     else:
-                        jsonResponse = json.dumps(response, indent=self.json_indent, sort_keys=self.sort_json)
+                        json_response = json.dumps(response, indent=self.json_indent, sort_keys=self.sort_json)
             else:
                 self.send_404(clientsocket)
                 return
@@ -132,7 +132,7 @@ class API:
             clientsocket.send(b'HTTP/1.1 200 OK\n')
             clientsocket.send(b'Content-Type: application/json\n')
             clientsocket.send(b'\n')
-            clientsocket.sendall(bytes(jsonResponse,self.encoding))
+            clientsocket.sendall(bytes(json_response,self.encoding))
             clientsocket.close()
 
 
@@ -145,30 +145,30 @@ class API:
 
 
 
-def htmlRequestToDict(request_string):  # makes requests from webbrowsers easier to work with
-    rowSeperated = request_string.split("\n")
-    row1Data = rowSeperated[0].split(" ")
+def html_request_to_dict(request_string):  # makes requests from webbrowsers easier to work with
+    row_seperated = request_string.split("\n")
+    row_1_data = row_seperated[0].split(" ")
     try:
-        requestDict = {"Type":row1Data[0].strip(), "Path":row1Data[1].strip(), "JSON":""}
+        request_dict = {"Type":row_1_data[0].strip(), "Path":row_1_data[1].strip(), "JSON":""}
     except:
         raise Exception("Invalid Request")
-    jsonStarted = False     # in case of post: tells code wether or not headers are done
-    for i in range(1, len(rowSeperated)):
-        if(rowSeperated[i] == "\r" or rowSeperated[i] == "\n"):
-            jsonStarted = True
-        if(len(rowSeperated[i])>1):
+    json_started = False     # in case of post: tells code wether or not headers are done
+    for i in range(1, len(row_seperated)):
+        if(row_seperated[i] == "\r" or row_seperated[i] == "\n"):
+            json_started = True
+        if(len(row_seperated[i])>1):
             key = ""
             value = ""
             j = 0
-            if not jsonStarted:
-                while rowSeperated[i][j] != ":":
-                    key += rowSeperated[i][j]
+            if not json_started:
+                while row_seperated[i][j] != ":":
+                    key += row_seperated[i][j]
                     j+=1
                 j+=1    #skip ":"
-                while j < len(rowSeperated[i]):
-                    value += rowSeperated[i][j]
+                while j < len(row_seperated[i]):
+                    value += row_seperated[i][j]
                     j+=1
-                requestDict[key] = value.strip()
+                request_dict[key] = value.strip()
             else:
-                requestDict["JSON"] += rowSeperated[i]
-    return requestDict
+                request_dict["JSON"] += row_seperated[i]
+    return request_dict
