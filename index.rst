@@ -63,6 +63,14 @@ API class
 Configuring the API 
 ==========
 
+Debugging (on by default)
+------------------
+
+    This will print events like invalid invalid requests to the terminal. (Turn off in deployed version)
+
+        api.debug = False
+
+
 Configuring what data gets send/processed (setPath)
 ------------------
 

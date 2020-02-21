@@ -20,6 +20,8 @@ class API:
         self.redirectHttp = True
         self.certchain = ""
         self.privkey = ""
+        # other
+        self.debug = True
 
 
     def setPath(self, path, data):
@@ -63,16 +65,21 @@ class API:
                     thread.daemon = True
                     thread.start()
                 except:
-                    print("HTTP Request over HTTPS")
+                    if self.debug:
+                        print("HTTP Request over HTTPS")
         else:
             raise Exception("Encryption is not turned on")
 
 
     def handle_https_request(self, clientsocket, address): # function for responding to api requests in a seperate thread
         requestString = clientsocket.recv(4096).decode("utf-8")
-        request = htmlRequestToDict(requestString)
+        try:
+            request = htmlRequestToDict(requestString)
+        except:
+            if self.debug:
+                print("Invalid Request")
+            return
         request["Client-Info"] = address
-
         if request["Path"] in self.URLpaths:
             if type(self.URLpaths[request["Path"]]).__name__ != "function":
                 jsonResponse = json.dumps(self.URLpaths[request["Path"]], indent=self.JSONindent, sort_keys=self.sortJSON)
@@ -95,7 +102,12 @@ class API:
 
     def handle_http_request(self, clientsocket, address): # function for responding to api requests in a seperate thread
         requestString = clientsocket.recv(4096).decode("utf-8")
-        request = htmlRequestToDict(requestString)
+        try:
+            request = htmlRequestToDict(requestString)
+        except:
+            if self.debug:
+                print("Invalid Request")
+            return
         request["Client-Info"] = address
 
         if self.redirectHttp and self.useTLS:
@@ -136,7 +148,10 @@ class API:
 def htmlRequestToDict(request_string):  # makes requests from webbrowsers easier to work with
     rowSeperated = request_string.split("\n")
     row1Data = rowSeperated[0].split(" ")
-    requestDict = {"Type":row1Data[0].strip(), "Path":row1Data[1].strip(), "JSON":""}
+    try:
+        requestDict = {"Type":row1Data[0].strip(), "Path":row1Data[1].strip(), "JSON":""}
+    except:
+        raise Exception("Invalid Request")
     jsonStarted = False     # in case of post: tells code wether or not headers are done
     for i in range(1, len(rowSeperated)):
         if(rowSeperated[i] == "\r" or rowSeperated[i] == "\n"):
