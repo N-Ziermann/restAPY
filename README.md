@@ -9,7 +9,7 @@
 ```python
 import restAPY
 api = restAPY.API(80, “0.0.0.0”)
-api.setPath(“/”, {“celsius”:5, “fahrenheit”:41})
+api.set_path(“/”, {“celsius”:5, “fahrenheit”:41})
 api.run()
 ```
 
