@@ -110,7 +110,7 @@ class API:
             return
         request["Client-Info"] = address
 
-        if self.redirect_http and self.useTLS:
+        if self.redirect_http and self.use_tls:
             redirect = "https://" + request["Host"] + request["Path"]
             clientsocket.send(b'HTTP/1.1 301 Moved Permanently\n')
             clientsocket.send(bytes('Location: ' + redirect + '\n', self.encoding))
