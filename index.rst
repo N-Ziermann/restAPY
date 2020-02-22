@@ -70,7 +70,9 @@ Debugging (on by default)
 
         api.debug = False
 
-    To then test if your API works as expected you can just open localhost/[path] inside your webbrowser and check if the correct data is returned or an error message appears in the terminal.
+    To then test if your API works you can either put the link to it into your webbrowser or run the following command inside your terminal:
+
+        curl [link]
 
 
 Configuring what data gets send/processed (set_path)
