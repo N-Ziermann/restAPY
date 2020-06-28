@@ -79,6 +79,7 @@ class API:
     def handle_https_request(
         self, clientsocket, address
     ):  # function for responding to api requests in a seperate thread
+        status_code = "200 OK"
         request_string = clientsocket.recv(4096).decode("utf-8")
         try:
             request = html_request_to_dict(request_string)
@@ -96,6 +97,9 @@ class API:
                 )
             else:  # if dev wants to do custom manipulation with his data
                 response = self.url_paths[request["Path"]](request)
+                if isinstance(response,dict) and "http_status_code" in response:
+                    status_code = response["http_status_code"]
+                    response = response["response_content"]
                 if response is None:
                     json_response = json.dumps(
                         "Error no value to return. Please report to the administrator",
@@ -110,7 +114,7 @@ class API:
             self.send_404(clientsocket)
             return
 
-        clientsocket.send(b"HTTP/1.1 200 OK\n")
+        clientsocket.send(bytes("HTTP/1.1" + status_code +"\n", self.encoding))
         clientsocket.send(b"Content-Type: application/json\n")
         clientsocket.send(b"\n")
         clientsocket.sendall(bytes(json_response, self.encoding))
@@ -119,6 +123,7 @@ class API:
     def handle_http_request(
         self, clientsocket, address
     ):  # function for responding to api requests in a seperate thread
+        status_code = "200 OK"
         request_string = clientsocket.recv(4096).decode("utf-8")
         try:
             request = html_request_to_dict(request_string)
@@ -143,6 +148,9 @@ class API:
                     )
                 else:  # if dev wants to do custom manipulation with his data
                     response = self.url_paths[request["Path"]](request)
+                    if isinstance(response,dict) and "http_status_code" in response:
+                        status_code = response["http_status_code"]
+                        response = response["response_content"]
                     if response is None:
                         json_response = json.dumps(
                             "Error no value to return. Please report to the administrator",
@@ -157,7 +165,7 @@ class API:
                 self.send_404(clientsocket)
                 return
 
-            clientsocket.send(b"HTTP/1.1 200 OK\n")
+            clientsocket.send(bytes("HTTP/1.1" + status_code +"\n", self.encoding))
             clientsocket.send(b"Content-Type: application/json\n")
             clientsocket.send(b"\n")
             clientsocket.sendall(bytes(json_response, self.encoding))
