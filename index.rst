@@ -90,7 +90,7 @@ Static Data
 
     This example would tell the API to return the value of the data variable when path /data is requested (http://domain/data)
 
-Dynamic Data
+Dynamic Data (status code: "200 OK")
 ^^^^^^^^^^^^^^^^^^^^^
 
     When you want the API to return dynamic data (for example when it receives a POST request) you put still use the set_path function, but it now takes a function as an argument instead of the returnable data itself.
@@ -116,6 +116,16 @@ Dynamic Data
     **NOTE2**: Do NOT put the "()" after the function name when giving a function as an argument to set_path()
 
     **NOTE3**: Your function needs to take request as an argument as this variable will contain all the information about the request the user made
+    
+Dynamic Data with custom status code
+^^^^^^^^^^^^^^^^^^^^^
+
+    Functions that dynamically work with requests, and also return status codes other than "200 OK", work just as those stated above regarding their arguments aswell as its connection to an url. The only difference is their return value. Instead of just returning the JSON data a dictionary with the same structure as in the following example needs to be returned:
+    
+    {
+    "http_status_code" : "200 OK",
+    "response_content" : [1,2,3,4]
+    }
 
 Configuring how the data is presented
 ------------------
